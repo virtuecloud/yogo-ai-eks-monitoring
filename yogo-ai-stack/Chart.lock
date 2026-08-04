@@ -1,0 +1,12 @@
+dependencies:
+- name: dot-ai
+  repository: file://../../../dot-ai-modules/dot-ai/charts
+  version: 1.15.1
+- name: dot-ai-controller
+  repository: file://../../../dot-ai-modules/dot-ai-controller/charts/dot-ai-controller
+  version: 0.48.1
+- name: dot-ai-ui
+  repository: file://../../../dot-ai-modules/dot-ai-ui/charts
+  version: 0.15.0
+digest: sha256:da90ff6ecebca202a81341ac4ac7c934c54f2217ab5cf59e4ec221afe6ac8649
+generated: "2026-07-14T12:14:55.294879873+05:30"

@@ -1,0 +1,25 @@
+dot-ai:
+  ai:
+    provider: "openai"
+  secrets:
+    openai:
+      apiKey: "YOUR_OPENAI_API_KEY"
+    auth:
+      token: "YOUR_SECURE_RANDOM_TOKEN_HERE"
+  localEmbeddings:
+    enabled: true
+  image:
+    repository: 772494532825.dkr.ecr.us-east-1.amazonaws.com/dot-ai
+    tag: latest
+
+dot-ai-ui:
+  uiAuth:
+    token: "YOUR_SECURE_RANDOM_TOKEN_HERE"
+  image:
+    repository: 772494532825.dkr.ecr.us-east-1.amazonaws.com/dot-ai-ui
+    tag: latest
+
+dot-ai-controller:
+  image:
+    repository: 772494532825.dkr.ecr.us-east-1.amazonaws.com/dot-ai-controller
+    tag: latest

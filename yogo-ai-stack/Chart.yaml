@@ -1,0 +1,18 @@
+apiVersion: v2
+appVersion: 0.67.0
+dependencies:
+- name: dot-ai
+  repository: file://../../../dot-ai-modules/dot-ai/charts
+  version: 1.15.1
+- condition: dot-ai-controller.enabled
+  name: dot-ai-controller
+  repository: file://../../../dot-ai-modules/dot-ai-controller/charts/dot-ai-controller
+  version: 0.48.1
+- condition: dot-ai-ui.enabled
+  name: dot-ai-ui
+  repository: file://../../../dot-ai-modules/dot-ai-ui/charts
+  version: 0.15.0
+description: Complete dot-ai stack - MCP server, controller, and UI
+name: dot-ai-stack
+type: application
+version: 0.67.0
