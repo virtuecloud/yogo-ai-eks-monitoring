@@ -88,7 +88,7 @@ Install the complete dot-ai stack with a single Helm command:
 ```bash
 helm upgrade --install dot-ai-stack \
     oci://ghcr.io/vfarcic/dot-ai-stack/charts/dot-ai-stack \
-    --namespace dot-ai --create-namespace \
+    --namespace yogo-ai --create-namespace \
     --set dot-ai.secrets.anthropic.apiKey=$ANTHROPIC_API_KEY \
     --set dot-ai.secrets.auth.token=$DOT_AI_AUTH_TOKEN \
     --set dot-ai.localEmbeddings.enabled=true \
@@ -118,7 +118,7 @@ This installs:
 Check that all pods are running:
 
 ```bash
-kubectl get pods --namespace dot-ai
+kubectl get pods --namespace yogo-ai
 ```
 
 You should see all pods in `Running` status:
@@ -265,9 +265,9 @@ For available options, see each component's documentation:
 To remove the stack:
 
 ```bash
-helm uninstall dot-ai-stack --namespace dot-ai
+helm uninstall dot-ai-stack --namespace yogo-ai
 
-kubectl delete namespace dot-ai
+kubectl delete namespace yogo-ai
 ```
 
 To delete the Kind cluster:

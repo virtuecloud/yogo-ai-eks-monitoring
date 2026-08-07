@@ -33,13 +33,13 @@ First, you will deploy the `yogo-ai` application into your EKS cluster using eit
 **Option A: Using the `.tgz` package**
 ```bash
 # Note: We use the 'dot-ai' namespace and release name for internal compatibility
-helm install dot-ai ./yogo-ai-stack-0.67.0.tgz -f client-values.yaml --namespace dot-ai --create-namespace
+helm install dot-ai ./yogo-ai-stack-0.67.0.tgz -f client-values.yaml --namespace yogo-ai --create-namespace
 ```
 
 **Option B: Using the raw chart directory**
 ```bash
 # Note: We use the 'dot-ai' namespace and release name for internal compatibility
-helm install dot-ai ./yogo-ai-stack -f client-values.yaml --namespace dot-ai --create-namespace
+helm install dot-ai ./yogo-ai-stack -f client-values.yaml --namespace yogo-ai --create-namespace
 ```
 
 Once the chart is deployed, you need to expose the services using an **Internal AWS Network Load Balancer (NLB)**. This ensures that your services are completely isolated from the public internet.
