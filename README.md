@@ -14,7 +14,7 @@ Our architecture uses a **Push-Based, Zero-Trust model**. You do not need to gra
 ## Step 0: Accessing Container Images (ECR Setup)
 The `yogo-ai` container images are securely hosted in VirtueCloud's private Amazon Elastic Container Registry (ECR). 
 
-When you onboard and link your AWS account in the VirtueCloud Central Dashboard, your AWS Account ID is **automatically whitelisted** in our ECR repositories. This automatically grants the IAM Roles assigned to your EKS worker nodes cross-account permissions to pull the images.
+When you onboard and link your AWS account in the Yogo Cloud Dashboard, your AWS Account ID is **automatically whitelisted** in our ECR repositories. This automatically grants the IAM Roles assigned to your EKS worker nodes cross-account permissions to pull the images.
 
 No manual authentication steps, Image Pull Secrets, or additional configurations are required.
 
@@ -23,10 +23,9 @@ No manual authentication steps, Image Pull Secrets, or additional configurations
 ## Step 1: Deploy the Helm Chart
 First, you will deploy the `yogo-ai` application into your EKS cluster using either the provided Helm chart tarball (`.tgz`) or the actual unarchived chart directory, along with the `client-values.yaml` configuration file.
 
-1. **Configure your Secrets**: Open `client-values.yaml` in a text editor.
+1. **Configure your Secrets**: Copy `client-values.yaml.example` to `client-values.yaml` and open it in a text editor.
    - Insert your AI provider's API key.
    - Generate a random string and place it in the two `token` fields.
-   *(Note: Internal configurations still use the original `dot-ai` naming)*
 
 2. **Deploy the Chart**: Navigate to the directory containing these files and run one of the following commands depending on your preference:
 
@@ -52,7 +51,7 @@ kubectl apply -f internal-nlbs.yaml
 Wait a few minutes for the AWS Load Balancers to be provisioned. You can check their status by running:
 
 ```bash
-kubectl get svc -n dot-ai
+kubectl get svc -n yogo-ai
 ```
 Look at the `EXTERNAL-IP` column for `dot-ai-nlb` and `dot-ai-qdrant-nlb`. If it says `<pending>`, they are still provisioning. Once an AWS hostname (e.g., `internal-k8s-...amazonaws.com`) appears, they are successfully provisioned.
 ---
@@ -89,7 +88,7 @@ Deploy the `yogo-ai-cloudformation.yaml` template using the AWS CloudFormation C
 
 **Option A: 1-Click Deployment (Recommended)**
 Use the following 1-click URL to automatically load the template in your AWS Console (ensure you are logged into your AWS account):
-[Launch Yogo-AI CloudFormation Stack](https://console.aws.amazon.com/cloudformation/home?region=ap-south-1#/stacks/create/review?templateURL=https://dashboard-client-assets-898896902478-prod.s3.ap-south-1.amazonaws.com/client-setup/dot-ai-cloudformation.yaml&stackName=yogo-ai-Integration)
+[Launch Yogo-AI CloudFormation Stack](https://console.aws.amazon.com/cloudformation/home?region=ap-south-1#/stacks/create/review?templateURL=https://dashboard-client-assets-898896902478-prod.s3.ap-south-1.amazonaws.com/client-setup/yogo-ai-cloudformation.yaml&stackName=yogo-ai-eks-Integration)
 
 **Option B: Manual Upload**
 1. Go to **AWS CloudFormation** -> **Create Stack** (With new resources).

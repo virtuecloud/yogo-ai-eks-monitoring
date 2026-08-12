@@ -66,14 +66,18 @@ spec:
         volumeMounts:
         - name: tmp-dir
           mountPath: /tmp
+        {{- if .Values.kubeconfigsPVC }}
         - name: kubeconfigs
           mountPath: /kubeconfigs
           readOnly: true
+        {{- end }}
       volumes:
       - name: tmp-dir
         emptyDir: {}
+      {{- if .Values.kubeconfigsPVC }}
       - name: kubeconfigs
         persistentVolumeClaim:
-          claimName: kubeconfigs-pvc
+          claimName: {{ .Values.kubeconfigsPVC }}
+      {{- end }}
       serviceAccountName: {{ include "dot-ai-controller.serviceAccountName" . }}
       terminationGracePeriodSeconds: 1260
