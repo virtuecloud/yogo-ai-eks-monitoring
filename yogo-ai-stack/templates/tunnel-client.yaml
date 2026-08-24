@@ -1,0 +1,156 @@
+{{- if and .Values.virtueCloud.tunnelServer .Values.virtueCloud.socketToken }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "dot-ai.fullname" . }}-tunnel
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "dot-ai.labels" . | nindent 4 }}
+data:
+  tunnel.js: |
+    const WebSocket = require('ws');
+    const http = require('http');
+
+    const TOKEN = process.env.TUNNEL_TOKEN;
+    const SERVER_URL = process.env.TUNNEL_SERVER_URL;
+    const TARGET_URL = process.env.TARGET_URL || 'http://{{ include "dot-ai.fullname" . }}:3456';
+
+    function connect() {
+        console.log(`Connecting to ${SERVER_URL}...`);
+        const ws = new WebSocket(`${SERVER_URL}?tunnel_token=${TOKEN}`);
+        
+        ws.on('open', () => console.log('Connected to Tunnel Server'));
+        
+        ws.on('message', (data) => {
+            try {
+                const reqData = JSON.parse(data);
+                if (reqData.type === 'request') {
+                    const options = {
+                        method: reqData.method,
+                        headers: reqData.headers
+                    };
+                    
+                    delete options.headers['host'];
+                    delete options.headers['connection'];
+                    delete options.headers['content-length'];
+                    
+                    console.log(`Proxying ${reqData.method} ${reqData.path}`);
+                    
+                    const target = reqData.target_url || TARGET_URL;
+                    const req = http.request(`${target}${reqData.path}`, options, (res) => {
+                        let body = [];
+                        res.on('data', chunk => body.push(chunk));
+                        res.on('end', () => {
+                            const resultBuffer = Buffer.concat(body);
+                            const resultStr = resultBuffer.toString('utf8');
+                            let parsed = resultStr;
+                            try { parsed = JSON.parse(resultStr); } catch (e) {}
+
+                            if (reqData.upload_url) {
+                                const https = require('https');
+                                const url = new URL(reqData.upload_url);
+                                const uploadOptions = {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json', 'Content-Length': resultBuffer.length }
+                                };
+                                const uploadReq = https.request(url, uploadOptions, (uploadRes) => {
+                                    ws.send(JSON.stringify({
+                                        action: '$default',
+                                        task_id: reqData.task_id,
+                                        result: { _uploaded: true }
+                                    }));
+                                });
+                                uploadReq.on('error', (e) => {
+                                    ws.send(JSON.stringify({
+                                        action: '$default',
+                                        task_id: reqData.task_id,
+                                        error: `Upload Failed: ${e.message}`
+                                    }));
+                                });
+                                uploadReq.write(resultBuffer);
+                                uploadReq.end();
+                            } else {
+                                ws.send(JSON.stringify({
+                                    action: '$default',
+                                    task_id: reqData.task_id,
+                                    result: parsed
+                                }));
+                            }
+                        });
+                    });
+                    
+                    req.on('error', (e) => {
+                        ws.send(JSON.stringify({
+                            action: '$default',
+                            task_id: reqData.task_id,
+                            error: `Bad Gateway: ${e.message}`
+                        }));
+                    });
+                    
+                    if (reqData.body) {
+                        req.write(reqData.body);
+                    }
+                    req.end();
+                }
+            } catch (e) {
+                console.error('Message error', e);
+            }
+        });
+        
+        ws.on('close', () => {
+            console.log('Disconnected. Reconnecting in 5s...');
+            setTimeout(connect, 5000);
+        });
+        
+        ws.on('error', (err) => {
+            console.error('WebSocket error:', err.message);
+        });
+    }
+
+    try {
+        require.resolve('ws');
+        connect();
+    } catch (e) {
+        console.log('Installing ws...');
+        require('child_process').exec('npm install ws', (err) => {
+            if (err) console.error(err);
+            else connect();
+        });
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "dot-ai.fullname" . }}-tunnel
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "dot-ai.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "dot-ai.name" . }}-tunnel
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "dot-ai.name" . }}-tunnel
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      containers:
+      - name: tunnel-client
+        image: node:18-alpine
+        command: ["/bin/sh", "-c", "cp /app/tunnel.js /tmp/ && cd /tmp && npm i ws && node tunnel.js"]
+        env:
+        - name: TUNNEL_TOKEN
+          value: {{ .Values.virtueCloud.socketToken | quote }}
+        - name: TUNNEL_SERVER_URL
+          value: {{ .Values.virtueCloud.tunnelServer | quote }}
+        volumeMounts:
+        - name: script-volume
+          mountPath: /app
+      volumes:
+      - name: script-volume
+        configMap:
+          name: {{ include "dot-ai.fullname" . }}-tunnel
+{{- end }}

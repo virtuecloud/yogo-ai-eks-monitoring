@@ -1,31 +1,24 @@
+virtueCloud:
+  tunnelServer: "wss://ruzm2bkng7.execute-api.ap-south-1.amazonaws.com/prod"
+  socketToken: "YOUR_VIRTUECLOUD_SOCKET_TOKEN_HERE"
+
 dot-ai:
   kubeconfigsPVC: ""
-  ai:
-    # Choose your provider: "anthropic", "openai"
-    provider: "openai"
   secrets:
-    # The API key for your chosen provider
-    # anthropic:
-    #   apiKey: "YOUR_ANTHROPIC_API_KEY"
-    # Or if using openai:
-    openai:
-      apiKey: "YOUR_OPENAI_API_KEY_HERE"
-    # A secure, random token used to authenticate the UI and backend
+    # A secure, random token used to authenticate Yogo-AI
     auth:
       token: "YOUR_SECURE_RANDOM_TOKEN_HERE"
-  # Set to true if you want to run embeddings locally within the cluster
+    google:
+      apiKey: "YOUR_API_KEY_HERE"
+  
+  # Configure AI to use Google natively
+  ai:
+    provider: google_flash
+
   localEmbeddings:
     enabled: true
   image:
     repository: 898896902478.dkr.ecr.ap-south-1.amazonaws.com/yogo-ai
-    tag: latest
-
-dot-ai-ui:
-  # Must match the dot-ai.secrets.auth.token exactly
-  uiAuth:
-    token: "YOUR_SECURE_RANDOM_TOKEN_HERE"
-  image:
-    repository: 898896902478.dkr.ecr.ap-south-1.amazonaws.com/yogo-ai-ui
     tag: latest
 
 dot-ai-controller:
