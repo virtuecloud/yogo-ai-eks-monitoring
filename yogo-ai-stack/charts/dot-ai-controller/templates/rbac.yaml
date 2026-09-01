@@ -6,7 +6,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "dot-ai-controller.labels" . | nindent 4 }}
-  {{- $annotations := include "dot-ai-controller.annotations" (dict "global" .Values.annotations "local" nil) -}}
+  {{- $sa := default dict .Values.serviceAccount -}}
+  {{- $annotations := include "dot-ai-controller.annotations" (dict "global" .Values.annotations "local" $sa.annotations) -}}
   {{- if $annotations }}
   annotations:
     {{- $annotations | nindent 4 }}
@@ -18,7 +19,8 @@ metadata:
   name: {{ .Release.Name }}-manager-rolebinding
   labels:
     {{- include "dot-ai-controller.labels" . | nindent 4 }}
-  {{- $annotations := include "dot-ai-controller.annotations" (dict "global" .Values.annotations "local" nil) -}}
+  {{- $sa := default dict .Values.serviceAccount -}}
+  {{- $annotations := include "dot-ai-controller.annotations" (dict "global" .Values.annotations "local" $sa.annotations) -}}
   {{- if $annotations }}
   annotations:
     {{- $annotations | nindent 4 }}

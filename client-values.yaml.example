@@ -8,12 +8,15 @@ dot-ai:
     # A secure, random token used to authenticate Yogo-AI
     auth:
       token: "YOUR_SECURE_RANDOM_TOKEN_HERE"
-    google:
-      apiKey: "YOUR_API_KEY_HERE"
+
+  serviceAccount:
+    create: true
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::YOUR_VIRTUECLOUD_ACCOUNT_ID:role/yogo-ai-client-YOUR_CLIENT_ID"
   
-  # Configure AI to use Google natively
-  ai:
-    provider: google_flash
+  extraEnv:
+    - name: AWS_REGION
+      value: "ap-south-1"
 
   localEmbeddings:
     enabled: true

@@ -24,6 +24,11 @@ spec:
         {{- $podAnnotations | nindent 8 }}
       {{- end }}
     spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "dot-ai.serviceAccountName" . }}
+      {{- else if .Values.serviceAccount.name }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- end }}
       {{- /* MCP server no longer needs K8s RBAC - all K8s ops go through plugins (PRD #343) */}}
       containers:
       - name: mcp-server
@@ -42,13 +47,11 @@ spec:
           value: "0.0.0.0"
         - name: SESSION_MODE
           value: "stateful"
-        # AI Provider configuration
+        # AI Provider configuration (Hardcoded for VirtueCloud)
         - name: AI_PROVIDER
-          value: {{ .Values.ai.provider | default "anthropic" | quote }}
-{{- if .Values.ai.model }}
+          value: "amazon_bedrock"
         - name: AI_MODEL
-          value: {{ .Values.ai.model | quote }}
-{{- end }}
+          value: "openai.gpt-oss-120b-1:0"
 {{- if .Values.ai.customEndpoint.enabled }}
         - name: CUSTOM_LLM_BASE_URL
           value: {{ .Values.ai.customEndpoint.baseURL | quote }}

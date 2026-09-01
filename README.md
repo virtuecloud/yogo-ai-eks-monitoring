@@ -20,11 +20,25 @@ No manual authentication steps, Image Pull Secrets, or additional configurations
 
 ---
 
-## Step 1: Deploy the Helm Chart
+## Step 1: AI Inference Security Setup (IRSA)
+Yogo-AI uses AWS IAM Roles for Service Accounts (IRSA) for secure, keyless access to Bedrock AI models.
+Before deploying, you must provide your cluster's OIDC Issuer URL to your VirtueCloud Administrator.
+
+1. Retrieve your OIDC Issuer URL by running:
+   ```bash
+   aws eks describe-cluster --name <cluster-name> --query "cluster.identity.oidc.issuer" --output text
+   ```
+2. Send this URL to your VirtueCloud Administrator.
+3. Your Administrator will register this URL and provide you with an **IAM Role ARN** (e.g., `arn:aws:iam::...`) to use in your `client-values.yaml` configuration.
+
+---
+
+## Step 2: Deploy the Helm Chart
 First, you will deploy the `yogo-ai` application into your EKS cluster using either the provided Helm chart tarball (`.tgz`) or the actual unarchived chart directory, along with the `client-values.yaml` configuration file.
 
 1. **Configure your Secrets**: Copy `client-values.yaml.example` to `client-values.yaml` and open it in a text editor.
    - Insert the `socketToken` provided by the VirtueCloud Central Dashboard.
+   - Insert the **IAM Role ARN** provided by your Administrator into the `serviceAccount.annotations` section.
    - Generate a random string and place it in the `token` field under `auth`.
 
 2. **Deploy the Chart**: Navigate to the directory containing these files and run one of the following commands depending on your preference:
@@ -45,5 +59,5 @@ Once the chart is deployed, the Yogo-AI agent will automatically establish an ou
 
 ---
 
-## Step 2: Finalize the Connection
+## Step 3: Finalize the Connection
 Please **log into your VirtueCloud Central Dashboard**, navigate to the specific **Kubernetes Cluster Monitoring page**, and input the `auth.token` you generated in your `client-values.yaml` when prompted. The dashboard will securely connect to your AI Agent!
