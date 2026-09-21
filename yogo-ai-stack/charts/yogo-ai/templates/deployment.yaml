@@ -1,0 +1,287 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "yogo-ai.fullname" . }}
+  labels:
+    {{- include "yogo-ai.labels" . | nindent 4 }}
+  {{- $annotations := include "yogo-ai.annotations" (dict "global" .Values.annotations "local" nil) -}}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "yogo-ai.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "yogo-ai.selectorLabels" . | nindent 8 }}
+      {{- $podAnnotations := include "yogo-ai.annotations" (dict "global" .Values.annotations "local" nil) -}}
+      {{- if $podAnnotations }}
+      annotations:
+        {{- $podAnnotations | nindent 8 }}
+      {{- end }}
+    spec:
+      serviceAccountName: {{ include "yogo-ai.serviceAccountName" . }}
+      containers:
+      - name: mcp-server
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy | default "IfNotPresent" }}
+        ports:
+        - containerPort: 3456
+          name: http
+          protocol: TCP
+        env:
+        - name: TRANSPORT_TYPE
+          value: "http"
+        - name: PORT
+          value: "3456"
+        - name: HOST
+          value: "0.0.0.0"
+        - name: SESSION_MODE
+          value: "stateful"
+        # AI Provider configuration
+        - name: AI_PROVIDER
+          value: {{ .Values.ai.provider | default "anthropic" | quote }}
+{{- if .Values.ai.model }}
+        - name: AI_MODEL
+          value: {{ .Values.ai.model | quote }}
+{{- end }}
+{{- if .Values.ai.customEndpoint.enabled }}
+        - name: CUSTOM_LLM_BASE_URL
+          value: {{ .Values.ai.customEndpoint.baseURL | quote }}
+        - name: CUSTOM_EMBEDDINGS_BASE_URL
+          value: {{ .Values.ai.customEndpoint.embeddingsBaseURL | default .Values.ai.customEndpoint.baseURL | quote }}
+{{- if .Values.ai.customEndpoint.embeddingsModel }}
+        - name: EMBEDDINGS_MODEL
+          value: {{ .Values.ai.customEndpoint.embeddingsModel | quote }}
+{{- end }}
+{{- if .Values.ai.customEndpoint.embeddingsDimensions }}
+        - name: EMBEDDINGS_DIMENSIONS
+          value: {{ .Values.ai.customEndpoint.embeddingsDimensions | quote }}
+{{- end }}
+{{- if .Values.ai.customEndpoint.headers }}
+        - name: CUSTOM_LLM_HEADERS
+          value: {{ .Values.ai.customEndpoint.headers | quote }}
+{{- end }}
+{{- end }}
+{{- if .Values.localEmbeddings.enabled }}
+        # Local embedding service auto-fallback (PRD #384)
+        # Placed before secretKeyRef entries so real keys from external secrets override the dummy
+        - name: CUSTOM_EMBEDDINGS_API_KEY
+          value: "local-embeddings-no-key-required"
+        - name: CUSTOM_EMBEDDINGS_BASE_URL
+          value: "http://{{ .Release.Name }}-local-embeddings.{{ .Release.Namespace }}.svc.cluster.local:80/v1"
+        - name: EMBEDDINGS_DIMENSIONS
+          value: {{ .Values.localEmbeddings.dimensions | quote }}
+{{- end }}
+        # AI Provider API Keys
+        - name: ANTHROPIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.name }}
+              key: {{ .Values.secrets.anthropic.keyName }}
+              optional: true
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.name }}
+              key: {{ .Values.secrets.openai.keyName }}
+              optional: true
+        - name: GOOGLE_GENERATIVE_AI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.name }}
+              key: {{ .Values.secrets.google.keyName }}
+              optional: true
+        - name: XAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.name }}
+              key: {{ .Values.secrets.xai.keyName }}
+              optional: true
+        - name: MOONSHOT_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.name }}
+              key: {{ .Values.secrets.moonshot.keyName }}
+              optional: true
+        - name: ALIBABA_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.name }}
+              key: {{ .Values.secrets.alibaba.keyName }}
+              optional: true
+        - name: CUSTOM_LLM_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.name }}
+              key: {{ .Values.secrets.customLlm.keyName | default "custom-llm-api-key" }}
+              optional: true
+{{- if not .Values.localEmbeddings.enabled }}
+        - name: CUSTOM_EMBEDDINGS_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.name }}
+              key: {{ .Values.secrets.customEmbeddings.keyName | default "custom-embeddings-api-key" }}
+              optional: true
+{{- end }}
+        # PRD #359: QDRANT_URL moved to agentic-tools plugin (all vector ops go through plugin)
+        # Bearer token authentication (required)
+        - name: YOGO_AI_AUTH_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.name }}
+              key: {{ .Values.secrets.auth.keyName }}
+{{- if .Values.rbac.enforcement.enabled }}
+        # RBAC enforcement (PRD #392)
+        - name: DOT_AI_RBAC_ENABLED
+          value: "true"
+{{- end }}
+{{- if .Values.dex.enabled }}
+        # Dex OIDC configuration (PRD #380)
+        # DEX_CLIENT_SECRET and YOGO_AI_JWT_SECRET injected via envFrom below
+        - name: DEX_ISSUER_URL
+          value: {{ include "yogo-ai.dexExternalUrl" . | quote }}
+        - name: DEX_TOKEN_ENDPOINT
+          value: {{ include "yogo-ai.dexTokenEndpoint" . | quote }}
+        - name: DEX_CLIENT_ID
+          value: "dot-ai"
+        - name: DOT_AI_EXTERNAL_URL
+          value: {{ include "yogo-ai.externalUrl" . | quote }}
+        - name: DEX_GRPC_ENDPOINT
+          value: {{ include "yogo-ai.dexGrpcEndpoint" . | quote }}
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+{{- end }}
+        # Git authentication (PRD #362: Git Operations)
+        # Note: YOGO_AI_GIT_TOKEN is configured via extraEnv - reused from user-prompts feature
+        - name: GITHUB_APP_ENABLED
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.name }}
+              key: github-app-enabled
+              optional: true
+        - name: GITHUB_APP_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.name }}
+              key: github-app-id
+              optional: true
+        - name: GITHUB_APP_PRIVATE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.name }}
+              key: github-app-private-key
+              optional: true
+        - name: GITHUB_APP_INSTALLATION_ID
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.secrets.name }}
+              key: github-app-installation-id
+              optional: true
+        # Web UI integration (PRD #317: Query Visualization)
+{{- if .Values.webUI.baseUrl }}
+        - name: WEB_UI_BASE_URL
+          value: {{ .Values.webUI.baseUrl | quote }}
+{{- end }}
+        # Note: KUBERNETES_SERVICE_HOST is automatically set by k8s and triggers in-cluster config
+{{- with .Values.extraEnv }}
+        # Additional environment variables
+        {{- toYaml . | nindent 8 }}
+{{- end }}
+{{- /* MCP Server Authentication env vars (PRD #414) */}}
+{{- range $name, $config := .Values.mcpServers }}
+{{- if and $config.enabled $config.auth }}
+{{- $upperName := $name | upper | replace "-" "_" }}
+{{- if and $config.auth.token $config.auth.token.existingSecret }}
+        - name: MCP_AUTH_{{ $upperName }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ $config.auth.token.existingSecret.name }}
+              key: {{ $config.auth.token.existingSecret.key }}
+{{- end }}
+{{- if and $config.auth.headers $config.auth.headers.existingSecret }}
+        - name: MCP_HEADERS_{{ $upperName }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ $config.auth.headers.existingSecret.name }}
+              key: {{ $config.auth.headers.existingSecret.key }}
+{{- end }}
+{{- if and $config.auth.oauth $config.auth.oauth.existingSecret }}
+        - name: MCP_OAUTH_SECRET_{{ $upperName }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ $config.auth.oauth.existingSecret.name }}
+              key: {{ $config.auth.oauth.existingSecret.key }}
+{{- end }}
+{{- end }}
+{{- end }}
+        lifecycle:
+          preStop:
+            exec:
+              command: ["sleep", "5"]
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 3456
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 3456
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 5
+{{- if .Values.dex.enabled }}
+        envFrom:
+          - secretRef:
+              name: {{ .Values.dex.existingSecret }}
+{{- end }}
+{{- $pluginsConfig := include "yogo-ai.pluginsConfig" . -}}
+{{- $mcpServersConfig := include "yogo-ai.mcpServersConfig" . -}}
+{{- if or (and $pluginsConfig (ne $pluginsConfig "[]")) (and $mcpServersConfig (ne $mcpServersConfig "[]")) }}
+        volumeMounts:
+{{- if and $pluginsConfig (ne $pluginsConfig "[]") }}
+        - name: plugins-config
+          mountPath: /etc/yogo-ai
+          readOnly: true
+{{- end }}
+{{- if and $mcpServersConfig (ne $mcpServersConfig "[]") }}
+        - name: mcp-servers-config
+          mountPath: /etc/yogo-ai-mcp
+          readOnly: true
+{{- end }}
+{{- end }}
+{{- if .Values.kubeconfigsPVC }}
+        - name: kubeconfigs-dir
+          mountPath: /etc/yogo-ai/kubeconfigs
+          readOnly: true
+{{- end }}
+{{- if or (and $pluginsConfig (ne $pluginsConfig "[]")) (and $mcpServersConfig (ne $mcpServersConfig "[]")) .Values.kubeconfigsPVC }}
+      volumes:
+{{- if and $pluginsConfig (ne $pluginsConfig "[]") }}
+      - name: plugins-config
+        configMap:
+          name: {{ include "yogo-ai.fullname" . }}-plugins
+{{- end }}
+{{- if and $mcpServersConfig (ne $mcpServersConfig "[]") }}
+      - name: mcp-servers-config
+        configMap:
+          name: {{ include "yogo-ai.fullname" . }}-mcp-servers
+{{- end }}
+{{- end }}
+{{- if .Values.kubeconfigsPVC }}
+      - name: kubeconfigs-dir
+        persistentVolumeClaim:
+          claimName: {{ .Values.kubeconfigsPVC }}
+{{- end }}
+      terminationGracePeriodSeconds: 30

@@ -1,0 +1,22 @@
+{{/*
+Plugin Configuration ConfigMap (PRD #343)
+Contains JSON array of enabled plugins for discovery by MCP server.
+Mounted at /etc/yogo-ai/plugins.json
+*/}}
+{{- $pluginsConfig := include "yogo-ai.pluginsConfig" . -}}
+{{- if and $pluginsConfig (ne $pluginsConfig "[]") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "yogo-ai.fullname" . }}-plugins
+  labels:
+    {{- include "yogo-ai.labels" . | nindent 4 }}
+  {{- $annotations := include "yogo-ai.annotations" (dict "global" .Values.annotations "local" nil) -}}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | nindent 4 }}
+  {{- end }}
+data:
+  plugins.json: |
+    {{ $pluginsConfig | nindent 4 | trim }}
+{{- end }}

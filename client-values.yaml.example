@@ -2,7 +2,7 @@ virtueCloud:
   tunnelServer: "wss://ruzm2bkng7.execute-api.ap-south-1.amazonaws.com/prod"
   socketToken: "YOUR_VIRTUECLOUD_SOCKET_TOKEN_HERE"
 
-dot-ai:
+yogo-ai:
   kubeconfigsPVC: ""
   secrets:
     # A secure, random token used to authenticate Yogo-AI
@@ -24,7 +24,7 @@ dot-ai:
     repository: 898896902478.dkr.ecr.ap-south-1.amazonaws.com/yogo-ai
     tag: latest
 
-dot-ai-controller:
+yogo-ai-controller:
   kubeconfigsPVC: ""
   image:
     repository: 898896902478.dkr.ecr.ap-south-1.amazonaws.com/yogo-ai-controller

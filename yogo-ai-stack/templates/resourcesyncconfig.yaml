@@ -1,5 +1,5 @@
 {{- if .Values.resourceSync.enabled }}
-apiVersion: dot-ai.devopstoolkit.live/v1alpha1
+apiVersion: yogo-ai.devopstoolkit.live/v1alpha1
 kind: ResourceSyncConfig
 metadata:
   name: default-sync
@@ -8,9 +8,9 @@ metadata:
     "helm.sh/hook-weight": "10"
 spec:
   targetClusterId: "hub"
-  mcpEndpoint: http://dot-ai:3456/api/v1/resources/sync
+  mcpEndpoint: http://yogo-ai:3456/api/v1/resources/sync
   mcpAuthSecretRef:
-    name: dot-ai-secrets
+    name: yogo-ai-secrets
     key: auth-token
   {{- with .Values.resourceSync.debounceWindowSeconds }}
   debounceWindowSeconds: {{ . }}

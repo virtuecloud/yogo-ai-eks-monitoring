@@ -1,0 +1,22 @@
+{{/*
+MCP Servers Configuration ConfigMap (PRD #358)
+Contains JSON array of enabled MCP servers for discovery by dot-ai.
+Mounted at /etc/yogo-ai-mcp/mcp-servers.json
+*/}}
+{{- $mcpServersConfig := include "yogo-ai.mcpServersConfig" . -}}
+{{- if and $mcpServersConfig (ne $mcpServersConfig "[]") }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "yogo-ai.fullname" . }}-mcp-servers
+  labels:
+    {{- include "yogo-ai.labels" . | nindent 4 }}
+  {{- $annotations := include "yogo-ai.annotations" (dict "global" .Values.annotations "local" nil) -}}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | nindent 4 }}
+  {{- end }}
+data:
+  mcp-servers.json: |
+    {{ $mcpServersConfig | nindent 4 | trim }}
+{{- end }}

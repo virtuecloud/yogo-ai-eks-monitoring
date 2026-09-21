@@ -1,0 +1,33 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "yogo-ai-controller.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "yogo-ai-controller.labels" . | nindent 4 }}
+  {{- $annotations := include "yogo-ai-controller.annotations" (dict "global" .Values.annotations "local" nil) -}}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | nindent 4 }}
+  {{- end }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "yogo-ai-controller.clusterRoleBindingName" . }}
+  labels:
+    {{- include "yogo-ai-controller.labels" . | nindent 4 }}
+  {{- $annotations := include "yogo-ai-controller.annotations" (dict "global" .Values.annotations "local" nil) -}}
+  {{- if $annotations }}
+  annotations:
+    {{- $annotations | nindent 4 }}
+  {{- end }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "yogo-ai-controller.clusterRoleName" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "yogo-ai-controller.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}

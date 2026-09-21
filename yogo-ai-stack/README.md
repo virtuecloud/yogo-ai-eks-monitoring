@@ -1,4 +1,4 @@
-# dot-ai-stack
+# yogo-ai-stack
 
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 ![Project Status](https://img.shields.io/badge/status-beta-orange)
@@ -17,7 +17,7 @@
 
 ## Overview
 
-dot-ai-stack is an umbrella Helm chart that aggregates all DevOps AI Toolkit components for simplified deployment. Instead of installing multiple charts separately, deploy everything with one command.
+yogo-ai-stack is an umbrella Helm chart that aggregates all DevOps AI Toolkit components for simplified deployment. Instead of installing multiple charts separately, deploy everything with one command.
 
 **What's included:**
 - **DevOps AI Toolkit** - MCP server for AI-powered Kubernetes operations

@@ -1,0 +1,25 @@
+# Default values for yogo-ai-controller
+
+# Global annotations applied to ALL Kubernetes resources
+# Use for tools like Reloader, compliance requirements, or consistent metadata
+annotations: {}
+  # Example: Reloader integration
+  # reloader.stakater.com/auto: "true"
+  # Example: Compliance/audit
+  # company.com/managed-by: "platform-team"
+
+# Image configuration
+image:
+  repository: ghcr.io/vfarcic/yogo-ai-controller
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion
+  tag: ""
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 10m
+    memory: 128Mi

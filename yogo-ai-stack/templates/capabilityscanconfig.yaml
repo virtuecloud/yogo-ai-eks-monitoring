@@ -1,5 +1,5 @@
 {{- if .Values.capabilityScan.enabled }}
-apiVersion: dot-ai.devopstoolkit.live/v1alpha1
+apiVersion: yogo-ai.devopstoolkit.live/v1alpha1
 kind: CapabilityScanConfig
 metadata:
   name: default-scan
@@ -8,9 +8,9 @@ metadata:
     "helm.sh/hook-weight": "10"
 spec:
   mcp:
-    endpoint: http://dot-ai:3456/api/v1/tools/manageOrgData
+    endpoint: http://yogo-ai:3456/api/v1/tools/manageOrgData
     authSecretRef:
-      name: dot-ai-secrets
+      name: yogo-ai-secrets
       key: auth-token
   {{- with .Values.capabilityScan.debounceWindowSeconds }}
   debounceWindowSeconds: {{ . }}
