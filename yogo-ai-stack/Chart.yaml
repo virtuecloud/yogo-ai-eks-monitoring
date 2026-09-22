@@ -6,10 +6,7 @@ dependencies:
 - condition: yogo-ai-controller.enabled
   name: yogo-ai-controller
   version: 0.48.1
-- condition: dot-ai-ui.enabled
-  name: dot-ai-ui
-  version: 0.15.0
-description: Complete yogo-ai stack - MCP server, controller, and UI
+description: Complete yogo-ai stack - MCP server and controller
 name: yogo-ai-stack
 type: application
 version: 0.67.0

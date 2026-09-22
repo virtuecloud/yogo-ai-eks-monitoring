@@ -28,3 +28,7 @@ prds/
 # Environment files
 .env*
 kubeconfig.yaml
+.claude/
+.github/
+docs/
+changelog.d/

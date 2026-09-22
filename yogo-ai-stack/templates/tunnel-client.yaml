@@ -20,8 +20,16 @@ data:
     function connect() {
         console.log(`Connecting to ${SERVER_URL}...`);
         const ws = new WebSocket(`${SERVER_URL}?tunnel_token=${TOKEN}`);
+        let pingInterval;
         
-        ws.on('open', () => console.log('Connected to Tunnel Server'));
+        ws.on('open', () => {
+            console.log('Connected to Tunnel Server');
+            pingInterval = setInterval(() => {
+                if (ws.readyState === WebSocket.OPEN) {
+                    ws.ping();
+                }
+            }, 30000);
+        });
         
         ws.on('message', (data) => {
             try {
@@ -99,13 +107,16 @@ data:
             }
         });
         
-        ws.on('close', () => {
-            console.log('Disconnected. Reconnecting in 5s...');
+        ws.on('close', (code, reason) => {
+            clearInterval(pingInterval);
+            console.log(`Disconnected (${code}). Reconnecting in 5s...`);
             setTimeout(connect, 5000);
         });
         
         ws.on('error', (err) => {
             console.error('WebSocket error:', err.message);
+            clearInterval(pingInterval);
+            try { ws.close(); } catch (e) {}
         });
     }
 
